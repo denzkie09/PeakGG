@@ -3,9 +3,10 @@
 import type { Game } from "@/types";
 
 const GAMES: { id: Game; label: string; shortLabel: string; color: string }[] = [
-  { id: "valorant", label: "Valorant", shortLabel: "VAL", color: "var(--accent-val)" },
-  { id: "league", label: "League of Legends", shortLabel: "LoL", color: "var(--accent-lol)" },
-  { id: "cs2", label: "CS2", shortLabel: "CS2", color: "var(--accent-cs)" },
+  { id: "valorant", label: "Valorant",          shortLabel: "VAL", color: "var(--accent-val)" },
+  { id: "league",   label: "League of Legends", shortLabel: "LoL", color: "var(--accent-lol)" },
+  { id: "cs2",      label: "CS2",               shortLabel: "CS2", color: "var(--accent-cs)"  },
+  { id: "dota2",    label: "Dota 2",            shortLabel: "D2",  color: "#e05c30"            },
 ];
 
 interface Props {

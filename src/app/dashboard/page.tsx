@@ -10,20 +10,23 @@ import {
   MOCK_VALORANT_STATS,
   MOCK_LEAGUE_STATS,
   MOCK_CS2_STATS,
+  MOCK_DOTA2_STATS,
 } from "@/lib/mock/data";
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer, Tooltip } from "recharts";
 
 export default function DashboardPage() {
   const [game, setGame] = useState<Game>("valorant");
 
-  const valStats = MOCK_VALORANT_STATS;
-  const lolStats = MOCK_LEAGUE_STATS;
-  const cs2Stats = MOCK_CS2_STATS;
+  const valStats  = MOCK_VALORANT_STATS;
+  const lolStats  = MOCK_LEAGUE_STATS;
+  const cs2Stats  = MOCK_CS2_STATS;
+  const dota2Stats = MOCK_DOTA2_STATS;
 
   const gameColor =
     game === "valorant" ? "var(--accent-val)" :
-    game === "league" ? "var(--accent-lol)" :
-    "var(--accent-cs)";
+    game === "league"   ? "var(--accent-lol)" :
+    game === "cs2"      ? "var(--accent-cs)"  :
+    "#e05c30";
 
   // Build stat cards per game
   const statCards = game === "valorant" ? [
@@ -36,62 +39,81 @@ export default function DashboardPage() {
     { label: "Win Rate", value: `${lolStats.winRate}%`, sub: "93 / 180 matches" },
     { label: "Avg CS", value: lolStats.avgCs, sub: "↑ 12 vs last month", trend: "up" as const },
     { label: "Rank", value: "Plat IV", sub: `${lolStats.lp} LP`, accentColor: "var(--accent-lol)" },
-  ] : [
+  ] : game === "cs2" ? [
     { label: "KDA Ratio", value: cs2Stats.kda.toFixed(2), sub: "K/D focused", trend: "neutral" as const },
     { label: "Win Rate", value: `${cs2Stats.winRate}%`, sub: "112 / 216 matches" },
     { label: "HS%", value: `${cs2Stats.headshotPercent}%`, sub: "↑ 3% vs last month", trend: "up" as const, accentColor: "var(--accent-green)" },
     { label: "Avg Rating", value: cs2Stats.avgRating.toFixed(2), sub: "↑ 0.04 vs last month", trend: "up" as const },
+  ] : [
+    { label: "Avg KDA",  value: dota2Stats.avgKda.toFixed(1), sub: "across all heroes", trend: "up" as const, accentColor: "var(--accent-green)" },
+    { label: "Win Rate", value: `${dota2Stats.winRate}%`,     sub: `${dota2Stats.wins}W / ${dota2Stats.losses}L` },
+    { label: "Avg GPM",  value: dota2Stats.avgGpm,            sub: "gold per minute",   accentColor: "#f09b3a" },
+    { label: "Avg XPM",  value: dota2Stats.avgXpm,            sub: "exp per minute" },
   ];
 
   const mapStats =
     game === "valorant" ? valStats.mapStats :
-    game === "league" ? lolStats.mapStats :
-    cs2Stats.mapStats;
+    game === "league"   ? lolStats.mapStats :
+    game === "cs2"      ? cs2Stats.mapStats :
+    dota2Stats.recentMatches.slice(0, 3).map(m => ({ name: m.hero, winRate: m.result === "win" ? 100 : 0, played: 1 }));
 
   const matches =
     game === "valorant" ? valStats.recentMatches.map(m => ({
-      map: m.map, agent: m.agent, result: m.result,
+      map: m.map, agent: m.agent, agentIcon: m.agentIcon, result: m.result,
       kills: m.kills, deaths: m.deaths, assists: m.assists,
       extra: `${m.hsPercent}% HS`, time: m.playedAt,
     })) :
     game === "league" ? lolStats.recentMatches.map(m => ({
-      map: m.lane, agent: m.champion, result: m.result,
+      map: m.lane, agent: m.champion, agentIcon: undefined, result: m.result,
       kills: m.kills, deaths: m.deaths, assists: m.assists,
       extra: `${m.cs} CS`, time: m.playedAt,
     })) :
-    cs2Stats.recentMatches.map(m => ({
-      map: m.map, agent: undefined, result: m.result,
+    game === "cs2" ? cs2Stats.recentMatches.map(m => ({
+      map: m.map, agent: undefined, agentIcon: undefined, result: m.result,
       kills: m.kills, deaths: m.deaths, assists: m.assists,
       extra: `${m.hsPercent}% HS`, time: m.playedAt,
+    })) :
+    dota2Stats.recentMatches.map(m => ({
+      map: m.hero, agent: m.role, agentIcon: undefined, result: m.result,
+      kills: m.kills, deaths: m.deaths, assists: m.assists,
+      extra: `${m.gpm} GPM`, time: m.playedAt,
     }));
 
   // Radar data for skill overview
   const radarData = game === "valorant" ? [
-    { stat: "Aim", value: 70 },
-    { stat: "Util", value: 58 },
-    { stat: "Game IQ", value: 65 },
+    { stat: "Aim",         value: 70 },
+    { stat: "Util",        value: 58 },
+    { stat: "Game IQ",     value: 65 },
     { stat: "Positioning", value: 72 },
-    { stat: "Clutch", value: 50 },
+    { stat: "Clutch",      value: 50 },
     { stat: "Consistency", value: 68 },
   ] : game === "league" ? [
-    { stat: "CS", value: 62 },
-    { stat: "Vision", value: 70 },
-    { stat: "Teamfight", value: 65 },
-    { stat: "Objectives", value: 58 },
-    { stat: "Roaming", value: 55 },
-    { stat: "Laning", value: 72 },
-  ] : [
-    { stat: "Aim", value: 75 },
-    { stat: "Utility", value: 55 },
+    { stat: "CS",          value: 62 },
+    { stat: "Vision",      value: 70 },
+    { stat: "Teamfight",   value: 65 },
+    { stat: "Objectives",  value: 58 },
+    { stat: "Roaming",     value: 55 },
+    { stat: "Laning",      value: 72 },
+  ] : game === "cs2" ? [
+    { stat: "Aim",         value: 75 },
+    { stat: "Utility",     value: 55 },
     { stat: "Positioning", value: 68 },
-    { stat: "Clutch", value: 58 },
-    { stat: "Spray", value: 72 },
-    { stat: "Awareness", value: 64 },
+    { stat: "Clutch",      value: 58 },
+    { stat: "Spray",       value: 72 },
+    { stat: "Awareness",   value: 64 },
+  ] : [
+    { stat: "Fighting",    value: 72 },
+    { stat: "Farming",     value: 80 },
+    { stat: "Supporting",  value: 45 },
+    { stat: "Pushing",     value: 60 },
+    { stat: "Versatility", value: 55 },
+    { stat: "Vision",      value: 50 },
   ];
 
   const agentOrChampStats =
     game === "valorant" ? valStats.agentStats :
-    game === "league" ? lolStats.championStats :
+    game === "league"   ? lolStats.championStats :
+    game === "dota2"    ? dota2Stats.heroStats.map(h => ({ name: h.hero, icon: h.heroIcon, winRate: h.winRate, kda: h.kda, played: h.played })) :
     null;
 
   return (
@@ -127,18 +149,20 @@ export default function DashboardPage() {
           </div>
           <div className="font-display" style={{ fontSize: 24, fontWeight: 700, color: gameColor, marginTop: 2 }}>
             {game === "valorant" ? `${valStats.rank} · ${valStats.rr} RR` :
-             game === "league" ? `${lolStats.rank} · ${lolStats.lp} LP` :
-             `${cs2Stats.rank} · ${cs2Stats.elo} ELO`}
+             game === "league"   ? `${lolStats.rank} · ${lolStats.lp} LP` :
+             game === "cs2"      ? `${cs2Stats.rank} · ${cs2Stats.elo} ELO` :
+             `${dota2Stats.rank} · ${dota2Stats.mmr} MMR`}
           </div>
         </div>
         <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
           <div className="stat-pill">
             {game === "valorant" ? `#${valStats.topAgent} main` :
-             game === "league" ? `#${lolStats.topChampion} main` :
+             game === "league"   ? `#${lolStats.topChampion} main` :
+             game === "dota2"    ? `#${dota2Stats.heroStats[0]?.hero} main` :
              "Rifler"}
           </div>
           <div className="stat-pill" style={{ color: gameColor }}>
-            {game === "valorant" ? "NA region" : game === "league" ? "NA region" : "NA Premier"}
+            {game === "valorant" ? "NA region" : game === "league" ? "NA region" : game === "cs2" ? "NA Premier" : "SEA server"}
           </div>
         </div>
       </div>
@@ -206,7 +230,7 @@ export default function DashboardPage() {
         {/* Agent / Champion stats */}
         <div className="card" style={{ padding: "18px 20px" }}>
           <h2 className="font-display" style={{ fontSize: 15, fontWeight: 600, marginBottom: 14 }}>
-            {game === "valorant" ? "Agent Stats" : game === "league" ? "Champion Stats" : "Weapon Stats"}
+            {game === "valorant" ? "Agent Stats" : game === "league" ? "Champion Stats" : game === "dota2" ? "Hero Stats" : "Weapon Stats"}
           </h2>
           {agentOrChampStats ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
@@ -232,20 +256,24 @@ export default function DashboardPage() {
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <div
                       style={{
-                        width: 24,
-                        height: 24,
+                        width: 28,
+                        height: 28,
                         borderRadius: "var(--radius-sm)",
                         background: "var(--bg-elevated)",
+                        overflow: "hidden",
+                        flexShrink: 0,
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        fontSize: 9,
-                        color: "var(--text-tertiary)",
-                        fontFamily: "var(--font-mono)",
-                        flexShrink: 0,
                       }}
                     >
-                      {a.name.slice(0, 2).toUpperCase()}
+                      {a.icon ? (
+                        <img src={a.icon} alt={a.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ) : (
+                        <span style={{ fontSize: 9, color: "var(--text-tertiary)", fontFamily: "var(--font-mono)" }}>
+                          {a.name.slice(0, 2).toUpperCase()}
+                        </span>
+                      )}
                     </div>
                     <span style={{ fontSize: 13, fontWeight: 500 }}>{a.name}</span>
                   </div>
