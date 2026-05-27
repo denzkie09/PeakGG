@@ -1,4 +1,4 @@
-export type Game = "valorant" | "league" | "cs2";
+export type Game = "valorant" | "league" | "cs2" | "dota2";
 
 export interface Player {
   id: string;
@@ -101,6 +101,7 @@ export interface MapStat {
   name: string;
   winRate: number;
   played: number;
+  image?: string;
 }
 
 export interface AgentStat {
@@ -132,4 +133,68 @@ export interface ProPlayer {
   valorantStats?: Partial<ValorantStats>;
   leagueStats?: Partial<LeagueStats>;
   cs2Stats?: Partial<CS2Stats>;
+}
+
+// ── Dota 2 ────────────────────────────────────────────────────────────────────
+
+export interface Dota2Item {
+  id: number;
+  name: string;
+  icon: string;
+  cost: number;
+  boughtAt: number; // game minute
+}
+
+export interface Dota2SkillPoint {
+  minute: number;
+  skillName: string;
+  level: number;
+}
+
+export interface Dota2Match {
+  matchId: string;
+  hero: string;
+  heroIcon: string;
+  role: string;
+  result: "win" | "loss";
+  kills: number;
+  deaths: number;
+  assists: number;
+  gpm: number;
+  xpm: number;
+  lastHits: number;
+  denies: number;
+  heroDamage: number;
+  towerDamage: number;
+  healingDone: number;
+  netWorth: number;
+  durationMinutes: number;
+  playedAt: string;
+  items: Dota2Item[];
+  skillTimeline: Dota2SkillPoint[];
+}
+
+export interface Dota2HeroStat {
+  hero: string;
+  heroIcon: string;
+  winRate: number;
+  kda: number;
+  avgGpm: number;
+  avgXpm: number;
+  played: number;
+}
+
+export interface Dota2Stats {
+  rank: string;
+  rankIcon: string;
+  mmr: number;
+  winRate: number;
+  wins: number;
+  losses: number;
+  avgKda: number;
+  avgGpm: number;
+  avgXpm: number;
+  avgLastHits: number;
+  recentMatches: Dota2Match[];
+  heroStats: Dota2HeroStat[];
 }

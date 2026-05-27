@@ -16,10 +16,17 @@ import {
 import { useAuth } from "@/context/AuthContext";
 
 const NAV = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/compare",   label: "Compare",   icon: ArrowLeftRight },
-  { href: "/players",   label: "Players",   icon: Users },
-  { href: "/pro",       label: "Pro Players", icon: Trophy },
+  { href: "/dashboard",      label: "Dashboard",   icon: LayoutDashboard },
+  { href: "/compare",        label: "Compare",     icon: ArrowLeftRight  },
+  { href: "/players",        label: "Players",     icon: Users           },
+  { href: "/pro",            label: "Pro Players", icon: Trophy          },
+];
+
+const GAME_NAV = [
+  { href: "/games/valorant", label: "Valorant",    color: "var(--accent-val)" },
+  { href: "/games/league",   label: "League",      color: "var(--accent-lol)" },
+  { href: "/games/cs2",      label: "CS2",         color: "var(--accent-cs)"  },
+  { href: "/games/dota2",    label: "Dota 2",      color: "#e05c30"            },
 ];
 
 export default function Sidebar() {
@@ -136,6 +143,37 @@ function SidebarInner() {
               {active && (
                 <div style={{ marginLeft: "auto", width: 4, height: 4, borderRadius: "50%", background: "var(--accent-purple)" }} />
               )}
+            </Link>
+          );
+        })}
+
+        {/* Games section */}
+        <div style={{ fontSize: 10, color: "var(--text-tertiary)", textTransform: "uppercase", letterSpacing: "0.5px", padding: "12px 12px 6px", fontFamily: "var(--font-mono)" }}>
+          Games
+        </div>
+        {GAME_NAV.map(({ href, label, color }) => {
+          const active = pathname.startsWith(href);
+          return (
+            <Link
+              key={href}
+              href={href}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "8px 12px",
+                borderRadius: "var(--radius-md)",
+                color: active ? color : "var(--text-secondary)",
+                background: active ? `${color}10` : "transparent",
+                border: active ? `1px solid ${color}30` : "1px solid transparent",
+                textDecoration: "none",
+                fontWeight: active ? 500 : 400,
+                fontSize: 13,
+                transition: "all 0.15s",
+              }}
+            >
+              <div style={{ width: 8, height: 8, borderRadius: "50%", background: color, flexShrink: 0, opacity: active ? 1 : 0.5 }} />
+              {label}
             </Link>
           );
         })}
