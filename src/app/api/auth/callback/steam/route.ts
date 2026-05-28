@@ -1,29 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-
-// ─────────────────────────────────────────────
-// Steam sends back the player's Steam ID in the
-// URL after they log in. We verify it with Steam
-// then optionally fetch their profile info.
-//
-// Requires in .env.local:
-//   STEAM_API_KEY=...    (for fetching profile info)
-//   NEXT_PUBLIC_BASE_URL=http://localhost:3000
-// ─────────────────────────────────────────────
+import { AUTH_COOKIE_NAME, encodeAuthUser } from "@/lib/auth-session";
 
 export async function GET(req: NextRequest) {
-  const baseUrl  = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
-  const params   = req.nextUrl.searchParams;
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? req.nextUrl.origin;
+  const params = req.nextUrl.searchParams;
 
-  // Steam returns the claimed ID like:
-  // https://steamcommunity.com/openid/id/76561198XXXXXXXXX
   const claimedId = params.get("openid.claimed_id") ?? "";
-  const steamId   = claimedId.split("/").pop();
+  const steamId = claimedId.split("/").pop();
 
   if (!steamId || !/^\d+$/.test(steamId)) {
-    return NextResponse.redirect(`${baseUrl}/settings?error=steam_no_id`);
+    return NextResponse.redirect(`${baseUrl}/login?error=steam_no_id`);
   }
 
-  // Verify the OpenID response with Steam (important for security)
   const verifyParams = new URLSearchParams(params);
   verifyParams.set("openid.mode", "check_authentication");
 
@@ -32,36 +20,49 @@ export async function GET(req: NextRequest) {
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: verifyParams.toString(),
   });
-
   const verifyText = await verifyRes.text();
 
   if (!verifyText.includes("is_valid:true")) {
-    return NextResponse.redirect(`${baseUrl}/settings?error=steam_invalid`);
+    return NextResponse.redirect(`${baseUrl}/login?error=steam_invalid`);
   }
 
-  // Optionally fetch Steam profile info
   const apiKey = process.env.STEAM_API_KEY;
   let personaName = steamId;
+  let avatarUrl: string | undefined;
+  let profileUrl: string | undefined;
 
   if (apiKey) {
     try {
       const profileRes = await fetch(
-        `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${apiKey}&steamids=${steamId}`
+        `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${apiKey}&steamids=${steamId}`,
       );
       const data = await profileRes.json();
-      personaName = data?.response?.players?.[0]?.personaname ?? steamId;
+      const player = data?.response?.players?.[0];
+      personaName = player?.personaname ?? steamId;
+      avatarUrl = player?.avatarfull ?? player?.avatarmedium;
+      profileUrl = player?.profileurl;
     } catch {
-      // Profile fetch failed — still link the account with just the Steam ID
+      personaName = steamId;
     }
   }
 
-  // TODO: Save steamId + personaName to your database
-  // linked to the currently logged-in user session.
-  // Example: await db.user.update({ steamId, steamName: personaName })
+  const res = NextResponse.redirect(`${baseUrl}/dashboard`);
+  res.cookies.set({
+    name: AUTH_COOKIE_NAME,
+    value: encodeAuthUser({
+      id: steamId,
+      username: personaName,
+      provider: "steam",
+      avatarUrl,
+      profileUrl,
+      rank: "Steam connected",
+    }),
+    httpOnly: true,
+    sameSite: "lax",
+    secure: baseUrl.startsWith("https://"),
+    path: "/",
+    maxAge: 60 * 60 * 24 * 7,
+  });
 
-  console.log("Steam account linked:", steamId, personaName);
-
-  return NextResponse.redirect(
-    `${baseUrl}/settings?linked=steam&name=${encodeURIComponent(personaName)}`
-  );
+  return res;
 }

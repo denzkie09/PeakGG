@@ -1,37 +1,23 @@
-import { NextResponse } from "next/server";
-
-// ─────────────────────────────────────────────
-// STEP 1 — Register your app at:
-//   https://developer.riotgames.com/
-//
-// STEP 2 — Add these to your .env.local:
-//   RIOT_CLIENT_ID=your_client_id_here
-//   RIOT_CLIENT_SECRET=your_client_secret_here
-//   NEXT_PUBLIC_BASE_URL=http://localhost:3000
-//
-// STEP 3 — In your Riot app settings, add this
-//   as an allowed redirect URI:
-//   http://localhost:3000/api/auth/callback/riot
-// ─────────────────────────────────────────────
+import { NextRequest, NextResponse } from "next/server";
 
 const RIOT_AUTH_URL = "https://auth.riotgames.com/authorize";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const clientId = process.env.RIOT_CLIENT_ID;
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? req.nextUrl.origin;
+  const state = crypto.randomUUID();
 
-  // If no client ID yet, return a helpful message
   if (!clientId) {
     return NextResponse.json(
       {
         error: "RIOT_CLIENT_ID not set",
         instructions: [
-          "1. Go to https://developer.riotgames.com/ and register an app",
-          "2. Add RIOT_CLIENT_ID and RIOT_CLIENT_SECRET to .env.local",
-          "3. Set redirect URI to: " + baseUrl + "/api/auth/callback/riot",
+          "Register an approved Riot app with RSO access.",
+          "Add RIOT_CLIENT_ID and RIOT_CLIENT_SECRET to .env.local.",
+          `Set the redirect URI to ${baseUrl}/api/auth/callback/riot.`,
         ],
       },
-      { status: 503 }
+      { status: 503 },
     );
   }
 
@@ -39,8 +25,20 @@ export async function GET() {
     client_id: clientId,
     redirect_uri: `${baseUrl}/api/auth/callback/riot`,
     response_type: "code",
-    scope: "openid",
+    scope: "openid offline_access",
+    state,
   });
 
-  return NextResponse.redirect(`${RIOT_AUTH_URL}?${params.toString()}`);
+  const res = NextResponse.redirect(`${RIOT_AUTH_URL}?${params.toString()}`);
+  res.cookies.set({
+    name: "riot_oauth_state",
+    value: state,
+    httpOnly: true,
+    sameSite: "lax",
+    secure: baseUrl.startsWith("https://"),
+    path: "/",
+    maxAge: 60 * 10,
+  });
+
+  return res;
 }
