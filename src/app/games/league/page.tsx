@@ -7,7 +7,6 @@ import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } fro
 
 const LOL = "#c89b3c";
 const LOL_BLUE = "#0a1428";
-const LOL_DIM = "rgba(200,155,60,0.10)";
 
 const GAME_LINKS = [
   { label: "Valorant",          href: "/games/valorant", color: "var(--accent-val)", active: false },
@@ -19,6 +18,7 @@ const GAME_LINKS = [
 export default function LeaguePage() {
   const stats = MOCK_LEAGUE_STATS;
   const [tab, setTab] = useState<"overview" | "champions" | "matches">("overview");
+  const [championSearch, setChampionSearch] = useState("");
 
   const radarData = [
     { stat: "CS",         value: 62 },
@@ -28,6 +28,10 @@ export default function LeaguePage() {
     { stat: "Roaming",    value: 55 },
     { stat: "Laning",     value: 72 },
   ];
+
+  const filteredChampionStats = stats.championStats.filter((champion) =>
+    champion.name.toLowerCase().includes(championSearch.trim().toLowerCase()),
+  );
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg-base)", position: "relative", overflow: "hidden" }}>
@@ -104,16 +108,20 @@ export default function LeaguePage() {
         {/* Tabs — LoL style scroll tabs */}
         <div className="fade-up-delay-2" style={{ display: "flex", gap: 0, marginBottom: 20, position: "relative" }}>
           <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 1, background: `${LOL}25` }} />
-          {(["overview", "champions", "matches"] as const).map(t => (
-            <button key={t} onClick={() => setTab(t)} style={{
+          {([
+            { id: "overview", label: "overview" },
+            { id: "champions", label: `champions (${stats.championStats.length})` },
+            { id: "matches", label: "matches" },
+          ] as const).map(t => (
+            <button key={t.id} onClick={() => setTab(t.id)} style={{
               padding: "10px 28px", border: "none",
-              borderBottom: tab === t ? `2px solid ${LOL}` : "2px solid transparent",
-              background: tab === t ? `${LOL}08` : "transparent",
-              color: tab === t ? LOL : "var(--text-secondary)",
-              fontFamily: "var(--font-display)", fontWeight: tab === t ? 700 : 400,
+              borderBottom: tab === t.id ? `2px solid ${LOL}` : "2px solid transparent",
+              background: tab === t.id ? `${LOL}08` : "transparent",
+              color: tab === t.id ? LOL : "var(--text-secondary)",
+              fontFamily: "var(--font-display)", fontWeight: tab === t.id ? 700 : 400,
               fontSize: 13, cursor: "pointer", textTransform: "capitalize",
               letterSpacing: "0.3px", transition: "all 0.15s", marginBottom: -1,
-            }}>{t}</button>
+            }}>{t.label}</button>
           ))}
         </div>
 
@@ -149,29 +157,45 @@ export default function LeaguePage() {
 
         {/* CHAMPIONS */}
         {tab === "champions" && (
-          <div className="fade-up" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
-            {stats.championStats.map((c) => (
-              <div key={c.name} style={{ background: `linear-gradient(135deg, ${LOL_BLUE}99, var(--bg-card))`, border: `1px solid ${LOL}25`, borderRadius: "var(--radius-lg)", padding: "16px 20px", display: "flex", alignItems: "center", gap: 14 }}>
-                <div style={{ width: 52, height: 52, borderRadius: "50%", background: `${LOL}20`, border: `2px solid ${LOL}40`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: LOL, fontFamily: "var(--font-display)", flexShrink: 0 }}>
-                  {c.name.slice(0, 2).toUpperCase()}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div className="font-display" style={{ fontSize: 16, fontWeight: 700 }}>{c.name}</div>
-                  <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginBottom: 8 }}>{c.played} games played</div>
-                  <div style={{ display: "flex", gap: 12 }}>
-                    <div>
-                      <div style={{ fontSize: 16, fontWeight: 700, fontFamily: "var(--font-mono)", color: c.winRate >= 50 ? "var(--accent-green)" : "var(--accent-red)" }}>{c.winRate}%</div>
-                      <div style={{ fontSize: 10, color: "var(--text-tertiary)" }}>Win Rate</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 16, fontWeight: 700, fontFamily: "var(--font-mono)" }}>{c.kda.toFixed(1)}</div>
-                      <div style={{ fontSize: 10, color: "var(--text-tertiary)" }}>KDA</div>
+          <div className="fade-up">
+            <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 12 }}>
+              <input
+                value={championSearch}
+                onChange={(event) => setChampionSearch(event.target.value)}
+                placeholder="Search champions"
+                style={{ width: 280, padding: "9px 12px", borderRadius: "var(--radius-md)", border: `1px solid ${LOL}25`, background: "var(--bg-elevated)", color: "var(--text-primary)", fontSize: 13, outline: "none" }}
+              />
+              <button style={{ padding: "9px 14px", borderRadius: "var(--radius-md)", border: `1px solid ${LOL}35`, background: `${LOL}12`, color: LOL, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+                Search
+              </button>
+              <span style={{ marginLeft: "auto", color: "var(--text-tertiary)", fontSize: 12, fontFamily: "var(--font-mono)" }}>
+                {filteredChampionStats.length} / {stats.championStats.length}
+              </span>
+            </div>
+            <div style={{ maxHeight: 600, overflowY: "auto", paddingRight: 6, display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12 }}>
+              {filteredChampionStats.map((c) => (
+                <div key={c.name} style={{ background: `linear-gradient(135deg, ${LOL_BLUE}99, var(--bg-card))`, border: `1px solid ${LOL}25`, borderRadius: "var(--radius-lg)", padding: "16px 20px", display: "flex", alignItems: "center", gap: 14 }}>
+                  <div style={{ width: 52, height: 52, borderRadius: "50%", background: `${LOL}20`, border: `2px solid ${LOL}40`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: LOL, fontFamily: "var(--font-display)", flexShrink: 0 }}>
+                    {c.name.slice(0, 2).toUpperCase()}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div className="font-display" style={{ fontSize: 16, fontWeight: 700 }}>{c.name}</div>
+                    <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginBottom: 8 }}>{c.played} games played</div>
+                    <div style={{ display: "flex", gap: 12 }}>
+                      <div>
+                        <div style={{ fontSize: 16, fontWeight: 700, fontFamily: "var(--font-mono)", color: c.winRate >= 50 ? "var(--accent-green)" : "var(--accent-red)" }}>{c.winRate}%</div>
+                        <div style={{ fontSize: 10, color: "var(--text-tertiary)" }}>Win Rate</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 16, fontWeight: 700, fontFamily: "var(--font-mono)" }}>{c.kda.toFixed(1)}</div>
+                        <div style={{ fontSize: 10, color: "var(--text-tertiary)" }}>KDA</div>
+                      </div>
                     </div>
                   </div>
+                  <div style={{ width: 4, height: 52, borderRadius: 99, background: c.winRate >= 50 ? LOL : "var(--accent-red)" }} />
                 </div>
-                <div style={{ width: 4, height: 52, borderRadius: 99, background: c.winRate >= 50 ? LOL : "var(--accent-red)" }} />
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
 

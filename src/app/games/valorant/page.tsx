@@ -20,6 +20,7 @@ const GAME_LINKS = [
 export default function ValorantPage() {
   const stats = MOCK_VALORANT_STATS;
   const [tab, setTab] = useState<"overview" | "agents" | "matches">("overview");
+  const [agentSearch, setAgentSearch] = useState("");
 
   const matches = stats.recentMatches.map(m => ({
     map: m.map, agent: m.agent, agentIcon: m.agentIcon, result: m.result,
@@ -35,6 +36,10 @@ export default function ValorantPage() {
     { stat: "Clutch",      value: 50 },
     { stat: "Consistency", value: 68 },
   ];
+
+  const filteredAgentStats = stats.agentStats.filter((agent) =>
+    agent.name.toLowerCase().includes(agentSearch.trim().toLowerCase()),
+  );
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg-base)", position: "relative", overflow: "hidden" }}>
@@ -75,7 +80,7 @@ export default function ValorantPage() {
           <div style={{ display: "flex", alignItems: "flex-end", gap: 16 }}>
             <div>
               <div style={{ fontSize: 11, color: VAL, fontFamily: "var(--font-mono)", textTransform: "uppercase", letterSpacing: "2px", marginBottom: 4 }}>
-                // TACTICAL SHOOTER
+                {"// TACTICAL SHOOTER"}
               </div>
               <h1 className="font-display" style={{ fontSize: 48, fontWeight: 800, letterSpacing: "-1px", color: "var(--text-primary)", lineHeight: 1 }}>
                 VALORANT
@@ -111,22 +116,26 @@ export default function ValorantPage() {
 
         {/* Tabs */}
         <div className="fade-up-delay-2" style={{ display: "flex", gap: 0, marginBottom: 20, borderBottom: `1px solid ${VAL}20` }}>
-          {(["overview", "agents", "matches"] as const).map(t => (
-            <button key={t} onClick={() => setTab(t)} style={{
+          {([
+            { id: "overview", label: "overview" },
+            { id: "agents", label: `agents (${stats.agentStats.length})` },
+            { id: "matches", label: "matches" },
+          ] as const).map(t => (
+            <button key={t.id} onClick={() => setTab(t.id)} style={{
               padding: "10px 24px",
               border: "none",
-              borderBottom: tab === t ? `2px solid ${VAL}` : "2px solid transparent",
+              borderBottom: tab === t.id ? `2px solid ${VAL}` : "2px solid transparent",
               background: "transparent",
-              color: tab === t ? VAL : "var(--text-secondary)",
+              color: tab === t.id ? VAL : "var(--text-secondary)",
               fontFamily: "var(--font-display)",
-              fontWeight: tab === t ? 700 : 400,
+              fontWeight: tab === t.id ? 700 : 400,
               fontSize: 13,
               cursor: "pointer",
               textTransform: "uppercase",
               letterSpacing: "0.5px",
               transition: "all 0.15s",
               marginBottom: -1,
-            }}>{t}</button>
+            }}>{t.label}</button>
           ))}
         </div>
 
@@ -144,7 +153,7 @@ export default function ValorantPage() {
               </ResponsiveContainer>
             </div>
             <div style={{ background: VAL_DIM, border: `1px solid ${VAL}25`, borderRadius: "var(--radius-lg)", padding: "18px 20px" }}>
-              <h2 className="font-display" style={{ fontSize: 14, fontWeight: 700, color: VAL, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 16 }}>Map Performance</h2>
+              <h2 className="font-display" style={{ fontSize: 14, fontWeight: 700, color: VAL, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 16 }}>Map Performance ({stats.mapStats.length} maps)</h2>
               <MapStats maps={stats.mapStats} />
             </div>
           </div>
@@ -152,31 +161,47 @@ export default function ValorantPage() {
 
         {/* AGENTS */}
         {tab === "agents" && (
-          <div className="fade-up" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {stats.agentStats.map((a, i) => (
-              <div key={a.name} style={{ display: "grid", gridTemplateColumns: "1fr 80px 80px 70px", alignItems: "center", gap: 16, padding: "14px 20px", background: i % 2 === 0 ? VAL_DIM : "rgba(255,70,85,0.04)", border: `1px solid ${VAL}20`, borderRadius: "var(--radius-md)" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: "var(--radius-sm)", background: `${VAL}20`, border: `1px solid ${VAL}30`, overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    {a.icon ? <img src={a.icon} alt={a.name} style={{ width: "100%", height: "100%", objectFit: "contain", padding: 4 }} /> : <span style={{ fontSize: 10, color: VAL, fontFamily: "var(--font-mono)" }}>{a.name.slice(0,2).toUpperCase()}</span>}
+          <div className="fade-up">
+            <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 12 }}>
+              <input
+                value={agentSearch}
+                onChange={(event) => setAgentSearch(event.target.value)}
+                placeholder="Search agents"
+                style={{ width: 260, padding: "9px 12px", borderRadius: "var(--radius-md)", border: `1px solid ${VAL}25`, background: "var(--bg-elevated)", color: "var(--text-primary)", fontSize: 13, outline: "none" }}
+              />
+              <button style={{ padding: "9px 14px", borderRadius: "var(--radius-md)", border: `1px solid ${VAL}35`, background: `${VAL}12`, color: VAL, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+                Search
+              </button>
+              <span style={{ marginLeft: "auto", color: "var(--text-tertiary)", fontSize: 12, fontFamily: "var(--font-mono)" }}>
+                {filteredAgentStats.length} / {stats.agentStats.length}
+              </span>
+            </div>
+            <div style={{ maxHeight: 560, overflowY: "auto", paddingRight: 6, display: "flex", flexDirection: "column", gap: 8 }}>
+              {filteredAgentStats.map((a, i) => (
+                <div key={a.name} style={{ display: "grid", gridTemplateColumns: "1fr 80px 80px 70px", alignItems: "center", gap: 16, padding: "14px 20px", background: i % 2 === 0 ? VAL_DIM : "rgba(255,70,85,0.04)", border: `1px solid ${VAL}20`, borderRadius: "var(--radius-md)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{ width: 40, height: 40, borderRadius: "var(--radius-sm)", background: `${VAL}20`, border: `1px solid ${VAL}30`, overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {a.icon ? <img src={a.icon} alt={a.name} style={{ width: "100%", height: "100%", objectFit: "contain", padding: 4 }} /> : <span style={{ fontSize: 10, color: VAL, fontFamily: "var(--font-mono)" }}>{a.name.slice(0,2).toUpperCase()}</span>}
+                    </div>
+                    <div>
+                      <div className="font-display" style={{ fontSize: 15, fontWeight: 700 }}>{a.name}</div>
+                      <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>{a.played} games played</div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="font-display" style={{ fontSize: 15, fontWeight: 700 }}>{a.name}</div>
-                    <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>{a.played} games played</div>
+                  <div style={{ textAlign: "center" }}>
+                    <div style={{ fontSize: 18, fontWeight: 700, fontFamily: "var(--font-mono)", color: a.winRate >= 50 ? "var(--accent-green)" : "var(--accent-red)" }}>{a.winRate}%</div>
+                    <div style={{ fontSize: 10, color: "var(--text-tertiary)", textTransform: "uppercase" }}>Win Rate</div>
+                  </div>
+                  <div style={{ textAlign: "center" }}>
+                    <div style={{ fontSize: 18, fontWeight: 700, fontFamily: "var(--font-mono)" }}>{a.kda.toFixed(1)}</div>
+                    <div style={{ fontSize: 10, color: "var(--text-tertiary)", textTransform: "uppercase" }}>KDA</div>
+                  </div>
+                  <div style={{ width: "100%", height: 4, background: "var(--bg-elevated)", borderRadius: 99, overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${a.winRate}%`, background: a.winRate >= 50 ? "var(--accent-green)" : VAL, borderRadius: 99 }} />
                   </div>
                 </div>
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 18, fontWeight: 700, fontFamily: "var(--font-mono)", color: a.winRate >= 50 ? "var(--accent-green)" : "var(--accent-red)" }}>{a.winRate}%</div>
-                  <div style={{ fontSize: 10, color: "var(--text-tertiary)", textTransform: "uppercase" }}>Win Rate</div>
-                </div>
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 18, fontWeight: 700, fontFamily: "var(--font-mono)" }}>{a.kda.toFixed(1)}</div>
-                  <div style={{ fontSize: 10, color: "var(--text-tertiary)", textTransform: "uppercase" }}>KDA</div>
-                </div>
-                <div style={{ width: "100%", height: 4, background: "var(--bg-elevated)", borderRadius: 99, overflow: "hidden" }}>
-                  <div style={{ height: "100%", width: `${a.winRate}%`, background: a.winRate >= 50 ? "var(--accent-green)" : VAL, borderRadius: 99 }} />
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
 

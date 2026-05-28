@@ -13,6 +13,7 @@ const DOTA_ACCENT = "#f09b3a";
 export default function Dota2Page() {
   const stats = MOCK_DOTA2_STATS;
   const [tab, setTab] = useState<"overview" | "heroes" | "matches">("overview");
+  const [heroSearch, setHeroSearch] = useState("");
 
   const radarData = [
     { stat: "Fighting",    value: 72 },
@@ -28,6 +29,10 @@ export default function Dota2Page() {
     GPM: m.gpm,
     XPM: m.xpm,
   })).reverse();
+
+  const filteredHeroStats = stats.heroStats.filter((hero) =>
+    hero.hero.toLowerCase().includes(heroSearch.trim().toLowerCase()),
+  );
 
   return (
     <div style={{ padding: "28px 32px", maxWidth: 1100, width: "100%" }}>
@@ -90,20 +95,24 @@ export default function Dota2Page() {
 
       {/* Tabs */}
       <div className="fade-up-delay-3" style={{ display: "flex", gap: 4, marginBottom: 16, background: "var(--bg-elevated)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-lg)", padding: 4, width: "fit-content" }}>
-        {(["overview", "heroes", "matches"] as const).map(t => (
-          <button key={t} onClick={() => setTab(t)} style={{
+        {([
+          { id: "overview", label: "overview" },
+          { id: "heroes", label: `heroes (${stats.heroStats.length})` },
+          { id: "matches", label: "matches" },
+        ] as const).map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)} style={{
             padding: "7px 20px",
             borderRadius: "var(--radius-md)",
-            border: tab === t ? `1px solid ${DOTA_COLOR}40` : "1px solid transparent",
-            background: tab === t ? `${DOTA_COLOR}12` : "transparent",
-            color: tab === t ? DOTA_COLOR : "var(--text-secondary)",
+            border: tab === t.id ? `1px solid ${DOTA_COLOR}40` : "1px solid transparent",
+            background: tab === t.id ? `${DOTA_COLOR}12` : "transparent",
+            color: tab === t.id ? DOTA_COLOR : "var(--text-secondary)",
             fontFamily: "var(--font-display)",
-            fontWeight: tab === t ? 600 : 400,
+            fontWeight: tab === t.id ? 600 : 400,
             fontSize: 13,
             cursor: "pointer",
             textTransform: "capitalize",
           }}>
-            {t}
+            {t.label}
           </button>
         ))}
       </div>
@@ -145,6 +154,20 @@ export default function Dota2Page() {
       {/* ── HEROES TAB ── */}
       {tab === "heroes" && (
         <div className="fade-up card" style={{ overflow: "hidden" }}>
+          <div style={{ display: "flex", gap: 10, alignItems: "center", padding: "14px 20px", borderBottom: "1px solid var(--border-subtle)" }}>
+            <input
+              value={heroSearch}
+              onChange={(event) => setHeroSearch(event.target.value)}
+              placeholder="Search heroes"
+              style={{ width: 280, padding: "9px 12px", borderRadius: "var(--radius-md)", border: `1px solid ${DOTA_COLOR}25`, background: "var(--bg-elevated)", color: "var(--text-primary)", fontSize: 13, outline: "none" }}
+            />
+            <button style={{ padding: "9px 14px", borderRadius: "var(--radius-md)", border: `1px solid ${DOTA_COLOR}35`, background: `${DOTA_COLOR}12`, color: DOTA_COLOR, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+              Search
+            </button>
+            <span style={{ marginLeft: "auto", color: "var(--text-tertiary)", fontSize: 12, fontFamily: "var(--font-mono)" }}>
+              {filteredHeroStats.length} / {stats.heroStats.length}
+            </span>
+          </div>
           <div style={{ display: "grid", gridTemplateColumns: "2fr 80px 80px 80px 80px 70px", gap: 12, padding: "12px 20px", borderBottom: "1px solid var(--border-subtle)", fontSize: 11, color: "var(--text-tertiary)", fontFamily: "var(--font-mono)", textTransform: "uppercase", letterSpacing: "0.4px" }}>
             <span>Hero</span>
             <span style={{ textAlign: "center" }}>Win%</span>
@@ -153,24 +176,26 @@ export default function Dota2Page() {
             <span style={{ textAlign: "center" }}>XPM</span>
             <span style={{ textAlign: "center" }}>Games</span>
           </div>
-          {stats.heroStats.map((h, i) => (
-            <div key={h.hero} style={{ display: "grid", gridTemplateColumns: "2fr 80px 80px 80px 80px 70px", gap: 12, padding: "12px 20px", borderBottom: i < stats.heroStats.length - 1 ? "1px solid var(--border-subtle)" : "none", alignItems: "center" }}
-              onMouseEnter={e => (e.currentTarget.style.background = "var(--bg-elevated)")}
-              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ width: 36, height: 36, borderRadius: "var(--radius-sm)", background: `${DOTA_COLOR}20`, border: `1px solid ${DOTA_COLOR}30`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: DOTA_COLOR, fontFamily: "var(--font-mono)", flexShrink: 0 }}>
-                  {h.hero.slice(0, 2).toUpperCase()}
+          <div style={{ maxHeight: 620, overflowY: "auto" }}>
+            {filteredHeroStats.map((h, i) => (
+              <div key={h.hero} style={{ display: "grid", gridTemplateColumns: "2fr 80px 80px 80px 80px 70px", gap: 12, padding: "12px 20px", borderBottom: i < filteredHeroStats.length - 1 ? "1px solid var(--border-subtle)" : "none", alignItems: "center" }}
+                onMouseEnter={e => (e.currentTarget.style.background = "var(--bg-elevated)")}
+                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: "var(--radius-sm)", background: `${DOTA_COLOR}20`, border: `1px solid ${DOTA_COLOR}30`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: DOTA_COLOR, fontFamily: "var(--font-mono)", flexShrink: 0 }}>
+                    {h.hero.slice(0, 2).toUpperCase()}
+                  </div>
+                  <span style={{ fontSize: 13, fontWeight: 500 }}>{h.hero}</span>
                 </div>
-                <span style={{ fontSize: 13, fontWeight: 500 }}>{h.hero}</span>
+                <span style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 13, color: h.winRate >= 50 ? "var(--accent-green)" : "var(--accent-red)" }}>{h.winRate}%</span>
+                <span style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 13 }}>{h.kda.toFixed(1)}</span>
+                <span style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 13, color: DOTA_ACCENT }}>{h.avgGpm}</span>
+                <span style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 13, color: "#a78bfa" }}>{h.avgXpm}</span>
+                <span style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--text-tertiary)" }}>{h.played}</span>
               </div>
-              <span style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 13, color: h.winRate >= 50 ? "var(--accent-green)" : "var(--accent-red)" }}>{h.winRate}%</span>
-              <span style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 13 }}>{h.kda.toFixed(1)}</span>
-              <span style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 13, color: DOTA_ACCENT }}>{h.avgGpm}</span>
-              <span style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 13, color: "#a78bfa" }}>{h.avgXpm}</span>
-              <span style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--text-tertiary)" }}>{h.played}</span>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
 
