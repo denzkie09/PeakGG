@@ -3,11 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { MOCK_CS2_STATS } from "@/lib/mock/data";
+import { useSettings } from "@/context/SettingsContext";
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 
 const CS = "#e06b30";
 const CS_STEEL = "rgba(180,180,190,0.06)";
-const CS_DIM = "rgba(224,107,48,0.10)";
 
 const GAME_LINKS = [
   { label: "Valorant",          href: "/games/valorant", color: "var(--accent-val)", active: false },
@@ -18,6 +18,7 @@ const GAME_LINKS = [
 
 export default function CS2Page() {
   const stats = MOCK_CS2_STATS;
+  const { settings } = useSettings();
   const [tab, setTab] = useState<"overview" | "maps" | "matches">("overview");
 
   const radarData = [
@@ -74,12 +75,12 @@ export default function CS2Page() {
               </div>
             </div>
             {/* ELO panel */}
-            <div style={{ marginLeft: "auto", background: CS_STEEL, border: `1px solid ${CS}30`, borderRadius: 0, padding: "14px 22px", textAlign: "right", position: "relative", clipPath: "polygon(8px 0%, 100% 0%, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0% 100%, 0% 8px)" }}>
+            {settings.showRankBanner && <div style={{ marginLeft: "auto", background: CS_STEEL, border: `1px solid ${CS}30`, borderRadius: 0, padding: "14px 22px", textAlign: "right", position: "relative", clipPath: "polygon(8px 0%, 100% 0%, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0% 100%, 0% 8px)" }}>
               <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: CS }} />
               <div style={{ fontSize: 10, color: CS, fontFamily: "var(--font-mono)", marginBottom: 4, textTransform: "uppercase", letterSpacing: "2px" }}>ELO RATING</div>
               <div className="font-display" style={{ fontSize: 28, fontWeight: 800, color: "var(--text-primary)" }}>{stats.elo}</div>
               <div style={{ fontSize: 12, color: "var(--text-secondary)", fontFamily: "var(--font-mono)" }}>{stats.rank}</div>
-            </div>
+            </div>}
           </div>
         </div>
 
@@ -125,8 +126,8 @@ export default function CS2Page() {
 
         {/* OVERVIEW */}
         {tab === "overview" && (
-          <div className="fade-up" style={{ display: "grid", gridTemplateColumns: "1fr 1.3fr", gap: 16 }}>
-            <div style={{ background: CS_STEEL, border: `1px solid ${CS}25`, borderRadius: "var(--radius-lg)", padding: "18px 20px" }}>
+          <div className="fade-up" style={{ display: "grid", gridTemplateColumns: settings.showRadarChart && settings.showMapStats ? "1fr 1.3fr" : "1fr", gap: 16 }}>
+            {settings.showRadarChart && <div style={{ background: CS_STEEL, border: `1px solid ${CS}25`, borderRadius: "var(--radius-lg)", padding: "18px 20px" }}>
               <h2 className="font-display" style={{ fontSize: 13, fontWeight: 700, color: CS, textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: 16 }}>Performance Radar</h2>
               <ResponsiveContainer width="100%" height={220}>
                 <RadarChart data={radarData}>
@@ -135,8 +136,8 @@ export default function CS2Page() {
                   <Radar dataKey="value" stroke={CS} fill={CS} fillOpacity={0.18} strokeWidth={1.5} />
                 </RadarChart>
               </ResponsiveContainer>
-            </div>
-            <div style={{ background: CS_STEEL, border: `1px solid ${CS}25`, borderRadius: "var(--radius-lg)", padding: "18px 20px" }}>
+            </div>}
+            {settings.showMapStats && <div style={{ background: CS_STEEL, border: `1px solid ${CS}25`, borderRadius: "var(--radius-lg)", padding: "18px 20px" }}>
               <h2 className="font-display" style={{ fontSize: 13, fontWeight: 700, color: CS, textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: 16 }}>Win Rate by Map</h2>
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={mapBarData} barSize={18}>
@@ -147,12 +148,12 @@ export default function CS2Page() {
                   <Bar dataKey="WinRate" fill={CS} radius={[2, 2, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
-            </div>
+            </div>}
           </div>
         )}
 
         {/* MAPS */}
-        {tab === "maps" && (
+        {tab === "maps" && settings.showMapStats && (
           <div className="fade-up" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
             {stats.mapStats.map(m => (
               <div key={m.name} style={{ background: CS_STEEL, border: `1px solid ${m.winRate >= 50 ? CS : "var(--border-subtle)"}40`, borderRadius: "var(--radius-lg)", padding: "18px 20px", position: "relative", overflow: "hidden" }}>
@@ -172,7 +173,7 @@ export default function CS2Page() {
         {/* MATCHES */}
         {tab === "matches" && (
           <div className="fade-up" style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {stats.recentMatches.map((m, i) => (
+            {stats.recentMatches.slice(0, settings.matchCount).map((m, i) => (
               <div key={i} style={{ display: "grid", gridTemplateColumns: "3px 1.2fr 1fr 1fr 1fr 80px", alignItems: "center", gap: 14, padding: "14px 20px", background: i % 2 === 0 ? CS_STEEL : "transparent", border: `1px solid ${CS}15` }}>
                 <div style={{ width: 3, height: 36, background: m.result === "win" ? "var(--accent-green)" : "var(--accent-red)" }} />
                 <div>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { MOCK_DOTA2_STATS } from "@/lib/mock/data";
 import StatCard from "@/components/ui/StatCard";
+import { useSettings } from "@/context/SettingsContext";
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { ChevronRight } from "lucide-react";
 
@@ -12,6 +13,7 @@ const DOTA_ACCENT = "#f09b3a";
 
 export default function Dota2Page() {
   const stats = MOCK_DOTA2_STATS;
+  const { settings } = useSettings();
   const [tab, setTab] = useState<"overview" | "heroes" | "matches">("overview");
   const [heroSearch, setHeroSearch] = useState("");
 
@@ -72,7 +74,7 @@ export default function Dota2Page() {
       </div>
 
       {/* Rank banner */}
-      <div className="fade-up-delay-1 card" style={{ padding: "16px 24px", marginBottom: 20, display: "flex", alignItems: "center", gap: 20, borderLeft: `3px solid ${DOTA_COLOR}` }}>
+      {settings.showRankBanner && <div className="fade-up-delay-1 card" style={{ padding: "16px 24px", marginBottom: 20, display: "flex", alignItems: "center", gap: 20, borderLeft: `3px solid ${DOTA_COLOR}` }}>
         <div>
           <div style={{ fontSize: 11, color: "var(--text-tertiary)", textTransform: "uppercase", letterSpacing: "0.5px", fontFamily: "var(--font-mono)" }}>Current Medal</div>
           <div className="font-display" style={{ fontSize: 24, fontWeight: 700, color: DOTA_COLOR, marginTop: 2 }}>
@@ -83,7 +85,7 @@ export default function Dota2Page() {
           <div className="stat-pill" style={{ color: DOTA_ACCENT }}>{stats.wins}W · {stats.losses}L</div>
           <div className="stat-pill">{stats.winRate}% Win Rate</div>
         </div>
-      </div>
+      </div>}
 
       {/* Stat cards */}
       <div className="fade-up-delay-2" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 20 }}>
@@ -119,9 +121,9 @@ export default function Dota2Page() {
 
       {/* ── OVERVIEW TAB ── */}
       {tab === "overview" && (
-        <div className="fade-up" style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr", gap: 16 }}>
+        <div className="fade-up" style={{ display: "grid", gridTemplateColumns: settings.showRadarChart && settings.showMapStats ? "1fr 1.4fr" : "1fr", gap: 16 }}>
           {/* Radar */}
-          <div className="card" style={{ padding: "18px 20px" }}>
+          {settings.showRadarChart && <div className="card" style={{ padding: "18px 20px" }}>
             <h2 className="font-display" style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>Playstyle Overview</h2>
             <p style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 12 }}>Based on recent 50 games</p>
             <ResponsiveContainer width="100%" height={220}>
@@ -131,10 +133,10 @@ export default function Dota2Page() {
                 <Radar dataKey="value" stroke={DOTA_COLOR} fill={DOTA_COLOR} fillOpacity={0.18} strokeWidth={1.5} />
               </RadarChart>
             </ResponsiveContainer>
-          </div>
+          </div>}
 
           {/* GPM / XPM trend */}
-          <div className="card" style={{ padding: "18px 20px" }}>
+          {settings.showMapStats && <div className="card" style={{ padding: "18px 20px" }}>
             <h2 className="font-display" style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>GPM / XPM Trend</h2>
             <p style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 12 }}>Last 5 games</p>
             <ResponsiveContainer width="100%" height={220}>
@@ -147,7 +149,7 @@ export default function Dota2Page() {
                 <Line type="monotone" dataKey="XPM" stroke="#a78bfa" strokeWidth={2} dot={{ fill: "#a78bfa", r: 3 }} />
               </LineChart>
             </ResponsiveContainer>
-          </div>
+          </div>}
         </div>
       )}
 
@@ -202,7 +204,7 @@ export default function Dota2Page() {
       {/* ── MATCHES TAB ── */}
       {tab === "matches" && (
         <div className="fade-up" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {stats.recentMatches.map((m) => (
+          {stats.recentMatches.slice(0, settings.matchCount).map((m) => (
             <Link key={m.matchId} href={`/games/dota2/match/${m.matchId}`} style={{ textDecoration: "none" }}>
               <div
                 className="card card-hover"

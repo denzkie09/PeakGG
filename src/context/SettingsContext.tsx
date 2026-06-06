@@ -22,7 +22,7 @@ export interface Settings {
   showMapStats: boolean;
 }
 
-const DEFAULTS: Settings = {
+export const DEFAULTS: Settings = {
   theme:          "dark",
   accentColor:    "purple",
   compactMode:    false,
@@ -45,19 +45,17 @@ interface SettingsContextValue {
 const SettingsContext = createContext<SettingsContextValue | null>(null);
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
-  const [settings, setSettings] = useState<Settings>(DEFAULTS);
-  const [mounted, setMounted]   = useState(false);
-
-  useEffect(() => {
+  const [settings, setSettings] = useState<Settings>(() => {
+    if (typeof window === "undefined") return DEFAULTS;
     try {
       const stored = localStorage.getItem("peakgg_settings");
-      if (stored) setSettings({ ...DEFAULTS, ...JSON.parse(stored) });
+      if (stored) return { ...DEFAULTS, ...JSON.parse(stored) };
     } catch {}
-    setMounted(true);
-  }, []);
+    return DEFAULTS;
+  });
 
   useEffect(() => {
-    if (!mounted) return;
+    if (typeof window === "undefined") return;
     const root   = document.documentElement;
     const isDark =
       settings.theme === "dark" ||
@@ -87,10 +85,15 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       root.style.setProperty("--border-subtle", "rgba(0,0,0,0.07)");
       root.style.setProperty("--border-default","rgba(0,0,0,0.12)");
     }
-  }, [settings.theme, mounted]);
+  }, [settings.theme]);
 
   useEffect(() => {
-    if (!mounted) return;
+    if (typeof document === "undefined") return;
+    document.documentElement.dataset.compact = settings.compactMode ? "true" : "false";
+  }, [settings.compactMode]);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
     const ACCENTS: Record<AccentColor, string> = {
       purple: "#a78bfa",
       val:    "#ff4655",
@@ -99,7 +102,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       dota2:  "#e05c30",
     };
     document.documentElement.style.setProperty("--accent-purple", ACCENTS[settings.accentColor]);
-  }, [settings.accentColor, mounted]);
+  }, [settings.accentColor]);
 
   const update = (patch: Partial<Settings>) => {
     setSettings(prev => {
@@ -113,8 +116,6 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setSettings(DEFAULTS);
     try { localStorage.removeItem("peakgg_settings"); } catch {}
   };
-
-  if (!mounted) return <>{children}</>;
 
   return (
     <SettingsContext.Provider value={{ settings, update, reset }}>

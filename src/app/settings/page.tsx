@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useSettings, type Theme, type AccentColor, type DefaultGame, type MatchCount, type Region } from "@/context/SettingsContext";
+import { DEFAULTS, useSettings, type Settings, type Theme, type AccentColor, type DefaultGame, type MatchCount, type Region } from "@/context/SettingsContext";
 import { useAuth } from "@/context/AuthContext";
 import { Check, RotateCcw, User, Palette, LayoutDashboard, Shield } from "lucide-react";
 
@@ -78,12 +78,25 @@ export default function SettingsPage() {
   const { settings, update, reset } = useSettings();
   const { user } = useAuth();
   const [saved, setSaved] = useState(false);
-  const [displayNameInput, setDisplayNameInput] = useState(settings.displayName);
+  const [draft, setDraft] = useState<Settings>(settings);
+
+  const changeDraft = (patch: Partial<Settings>) => {
+    setDraft(prev => ({ ...prev, ...patch }));
+    setSaved(false);
+  };
+
+  const hasChanges = JSON.stringify(draft) !== JSON.stringify(settings);
 
   const handleSave = () => {
-    update({ displayName: displayNameInput });
+    update(draft);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+  };
+
+  const handleReset = () => {
+    reset();
+    setDraft(DEFAULTS);
+    setSaved(false);
   };
 
   const ACCENT_OPTIONS: { color: AccentColor; hex: string; label: string }[] = [
@@ -107,14 +120,15 @@ export default function SettingsPage() {
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <button
-            onClick={reset}
+            onClick={handleReset}
             style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: "var(--radius-md)", border: "1px solid var(--border-default)", background: "transparent", color: "var(--text-secondary)", fontSize: 13, cursor: "pointer" }}
           >
             <RotateCcw size={13} /> Reset
           </button>
           <button
             onClick={handleSave}
-            style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 18px", borderRadius: "var(--radius-md)", border: "none", background: "var(--accent-purple)", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "opacity 0.15s" }}
+            disabled={!hasChanges && !saved}
+            style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 18px", borderRadius: "var(--radius-md)", border: "none", background: "var(--accent-purple)", color: "#fff", fontSize: 13, fontWeight: 600, cursor: hasChanges ? "pointer" : "default", opacity: hasChanges || saved ? 1 : 0.55, transition: "opacity 0.15s" }}
           >
             {saved ? <><Check size={13} /> Saved!</> : "Save Changes"}
           </button>
@@ -125,8 +139,8 @@ export default function SettingsPage() {
       <Section title="Profile" icon={User}>
         <SettingRow label="Display Name" description="Shown across the app and on your profile">
           <input
-            value={displayNameInput}
-            onChange={e => setDisplayNameInput(e.target.value)}
+            value={draft.displayName}
+            onChange={e => changeDraft({ displayName: e.target.value })}
             style={{
               background: "var(--bg-elevated)", border: "1px solid var(--border-default)",
               borderRadius: "var(--radius-md)", color: "var(--text-primary)",
@@ -141,12 +155,12 @@ export default function SettingsPage() {
             {AVATAR_COLORS.map(c => (
               <button
                 key={c}
-                onClick={() => update({ avatarColor: c })}
+                onClick={() => changeDraft({ avatarColor: c })}
                 style={{
                   width: 28, height: 28, borderRadius: "50%", background: c,
-                  border: settings.avatarColor === c ? "2px solid var(--text-primary)" : "2px solid transparent",
+                  border: draft.avatarColor === c ? "2px solid var(--text-primary)" : "2px solid transparent",
                   cursor: "pointer", outline: "none",
-                  boxShadow: settings.avatarColor === c ? `0 0 0 2px var(--bg-base), 0 0 0 4px ${c}` : "none",
+                  boxShadow: draft.avatarColor === c ? `0 0 0 2px var(--bg-base), 0 0 0 4px ${c}` : "none",
                   transition: "all 0.15s",
                 }}
               />
@@ -156,8 +170,8 @@ export default function SettingsPage() {
 
         <SettingRow label="Region" description="Your primary gaming region">
           <Select<Region>
-            value={settings.region}
-            onChange={v => update({ region: v })}
+            value={draft.region}
+            onChange={v => changeDraft({ region: v })}
             options={[
               { value: "NA",    label: "North America" },
               { value: "EU",    label: "Europe"        },
@@ -200,13 +214,13 @@ export default function SettingsPage() {
             {(["dark", "light", "system"] as Theme[]).map(t => (
               <button
                 key={t}
-                onClick={() => update({ theme: t })}
+                onClick={() => changeDraft({ theme: t })}
                 style={{
                   padding: "6px 14px", borderRadius: "var(--radius-md)",
-                  border: settings.theme === t ? "1px solid var(--border-default)" : "1px solid transparent",
-                  background: settings.theme === t ? "var(--bg-card)" : "transparent",
-                  color: settings.theme === t ? "var(--text-primary)" : "var(--text-secondary)",
-                  fontSize: 12, fontFamily: "var(--font-display)", fontWeight: settings.theme === t ? 600 : 400,
+                  border: draft.theme === t ? "1px solid var(--border-default)" : "1px solid transparent",
+                  background: draft.theme === t ? "var(--bg-card)" : "transparent",
+                  color: draft.theme === t ? "var(--text-primary)" : "var(--text-secondary)",
+                  fontSize: 12, fontFamily: "var(--font-display)", fontWeight: draft.theme === t ? 600 : 400,
                   cursor: "pointer", textTransform: "capitalize", transition: "all 0.15s",
                 }}
               >{t}</button>
@@ -219,25 +233,25 @@ export default function SettingsPage() {
             {ACCENT_OPTIONS.map(a => (
               <button
                 key={a.color}
-                onClick={() => update({ accentColor: a.color })}
+                onClick={() => changeDraft({ accentColor: a.color })}
                 title={a.label}
                 style={{
                   width: 28, height: 28, borderRadius: "var(--radius-sm)", background: a.hex,
-                  border: settings.accentColor === a.color ? "2px solid var(--text-primary)" : "2px solid transparent",
+                  border: draft.accentColor === a.color ? "2px solid var(--text-primary)" : "2px solid transparent",
                   cursor: "pointer", outline: "none",
-                  boxShadow: settings.accentColor === a.color ? `0 0 0 2px var(--bg-base), 0 0 0 4px ${a.hex}` : "none",
+                  boxShadow: draft.accentColor === a.color ? `0 0 0 2px var(--bg-base), 0 0 0 4px ${a.hex}` : "none",
                   transition: "all 0.15s",
                   display: "flex", alignItems: "center", justifyContent: "center",
                 }}
               >
-                {settings.accentColor === a.color && <Check size={12} color="#fff" strokeWidth={3} />}
+                {draft.accentColor === a.color && <Check size={12} color="#fff" strokeWidth={3} />}
               </button>
             ))}
           </div>
         </SettingRow>
 
         <SettingRow label="Compact Mode" description="Reduce spacing for a more data-dense layout">
-          <Toggle value={settings.compactMode} onChange={v => update({ compactMode: v })} />
+          <Toggle value={draft.compactMode} onChange={v => changeDraft({ compactMode: v })} />
         </SettingRow>
       </Section>
 
@@ -245,8 +259,8 @@ export default function SettingsPage() {
       <Section title="Dashboard Preferences" icon={LayoutDashboard}>
         <SettingRow label="Default Game" description="Which game loads first when you open the dashboard">
           <Select<DefaultGame>
-            value={settings.defaultGame}
-            onChange={v => update({ defaultGame: v })}
+            value={draft.defaultGame}
+            onChange={v => changeDraft({ defaultGame: v })}
             options={[
               { value: "valorant", label: "Valorant"          },
               { value: "league",   label: "League of Legends" },
@@ -258,8 +272,8 @@ export default function SettingsPage() {
 
         <SettingRow label="Recent Matches to Show" description="Number of matches displayed in match history">
           <Select<string>
-            value={String(settings.matchCount)}
-            onChange={v => update({ matchCount: Number(v) as MatchCount })}
+            value={String(draft.matchCount)}
+            onChange={v => changeDraft({ matchCount: Number(v) as MatchCount })}
             options={[
               { value: "5",  label: "5 matches"  },
               { value: "10", label: "10 matches" },
@@ -269,15 +283,15 @@ export default function SettingsPage() {
         </SettingRow>
 
         <SettingRow label="Show Rank Banner" description="Display your current rank at the top of game pages">
-          <Toggle value={settings.showRankBanner} onChange={v => update({ showRankBanner: v })} />
+          <Toggle value={draft.showRankBanner} onChange={v => changeDraft({ showRankBanner: v })} />
         </SettingRow>
 
         <SettingRow label="Show Radar Chart" description="Display the skill overview radar on game pages">
-          <Toggle value={settings.showRadarChart} onChange={v => update({ showRadarChart: v })} />
+          <Toggle value={draft.showRadarChart} onChange={v => changeDraft({ showRadarChart: v })} />
         </SettingRow>
 
         <SettingRow label="Show Map Stats" description="Display map performance section on game pages">
-          <Toggle value={settings.showMapStats} onChange={v => update({ showMapStats: v })} />
+          <Toggle value={draft.showMapStats} onChange={v => changeDraft({ showMapStats: v })} />
         </SettingRow>
       </Section>
 
@@ -295,7 +309,8 @@ export default function SettingsPage() {
       <div style={{ display: "flex", justifyContent: "flex-end", paddingTop: 8 }}>
         <button
           onClick={handleSave}
-          style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 28px", borderRadius: "var(--radius-md)", border: "none", background: "var(--accent-purple)", color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer" }}
+          disabled={!hasChanges && !saved}
+          style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 28px", borderRadius: "var(--radius-md)", border: "none", background: "var(--accent-purple)", color: "#fff", fontSize: 14, fontWeight: 600, cursor: hasChanges ? "pointer" : "default", opacity: hasChanges || saved ? 1 : 0.55 }}
         >
           {saved ? <><Check size={14} /> Saved!</> : "Save Changes"}
         </button>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { MOCK_LEAGUE_STATS } from "@/lib/mock/data";
+import { useSettings } from "@/context/SettingsContext";
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from "recharts";
 
 const LOL = "#c89b3c";
@@ -17,6 +18,7 @@ const GAME_LINKS = [
 
 export default function LeaguePage() {
   const stats = MOCK_LEAGUE_STATS;
+  const { settings } = useSettings();
   const [tab, setTab] = useState<"overview" | "champions" | "matches">("overview");
   const [championSearch, setChampionSearch] = useState("");
 
@@ -70,7 +72,7 @@ export default function LeaguePage() {
               </h1>
             </div>
             {/* Rank crest */}
-            <div style={{ marginLeft: "auto", background: `linear-gradient(135deg, ${LOL}18, ${LOL_BLUE}cc)`, border: `1px solid ${LOL}40`, borderRadius: "var(--radius-lg)", padding: "14px 22px", textAlign: "center" }}>
+            {settings.showRankBanner && <div style={{ marginLeft: "auto", background: `linear-gradient(135deg, ${LOL}18, ${LOL_BLUE}cc)`, border: `1px solid ${LOL}40`, borderRadius: "var(--radius-lg)", padding: "14px 22px", textAlign: "center" }}>
               <div style={{ fontSize: 10, color: LOL, fontFamily: "var(--font-mono)", marginBottom: 4, textTransform: "uppercase", letterSpacing: "1px" }}>Ranked Solo</div>
               <div className="font-display" style={{ fontSize: 20, fontWeight: 700, color: LOL }}>{stats.rank}</div>
               <div style={{ fontSize: 13, color: "var(--text-secondary)", fontFamily: "var(--font-mono)" }}>{stats.lp} LP</div>
@@ -78,7 +80,7 @@ export default function LeaguePage() {
               <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 6, fontFamily: "var(--font-mono)" }}>
                 {stats.winRate}% WR
               </div>
-            </div>
+            </div>}
           </div>
         </div>
 
@@ -127,8 +129,8 @@ export default function LeaguePage() {
 
         {/* OVERVIEW */}
         {tab === "overview" && (
-          <div className="fade-up" style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr", gap: 16 }}>
-            <div style={{ background: `linear-gradient(135deg, ${LOL_BLUE}99, var(--bg-card))`, border: `1px solid ${LOL}25`, borderRadius: "var(--radius-lg)", padding: "18px 20px" }}>
+          <div className="fade-up" style={{ display: "grid", gridTemplateColumns: settings.showRadarChart && settings.showMapStats ? "1fr 1.2fr" : "1fr", gap: 16 }}>
+            {settings.showRadarChart && <div style={{ background: `linear-gradient(135deg, ${LOL_BLUE}99, var(--bg-card))`, border: `1px solid ${LOL}25`, borderRadius: "var(--radius-lg)", padding: "18px 20px" }}>
               <h2 className="font-display" style={{ fontSize: 14, fontWeight: 700, color: LOL, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 16 }}>Champion Mastery Radar</h2>
               <ResponsiveContainer width="100%" height={220}>
                 <RadarChart data={radarData}>
@@ -137,8 +139,8 @@ export default function LeaguePage() {
                   <Radar dataKey="value" stroke={LOL} fill={LOL} fillOpacity={0.18} strokeWidth={1.5} />
                 </RadarChart>
               </ResponsiveContainer>
-            </div>
-            <div style={{ background: `linear-gradient(135deg, ${LOL_BLUE}99, var(--bg-card))`, border: `1px solid ${LOL}25`, borderRadius: "var(--radius-lg)", padding: "18px 20px" }}>
+            </div>}
+            {settings.showMapStats && <div style={{ background: `linear-gradient(135deg, ${LOL_BLUE}99, var(--bg-card))`, border: `1px solid ${LOL}25`, borderRadius: "var(--radius-lg)", padding: "18px 20px" }}>
               <h2 className="font-display" style={{ fontSize: 14, fontWeight: 700, color: LOL, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 16 }}>Map Performance</h2>
               {stats.mapStats.map(m => (
                 <div key={m.name} style={{ marginBottom: 12 }}>
@@ -151,7 +153,7 @@ export default function LeaguePage() {
                   </div>
                 </div>
               ))}
-            </div>
+            </div>}
           </div>
         )}
 
@@ -202,7 +204,7 @@ export default function LeaguePage() {
         {/* MATCHES */}
         {tab === "matches" && (
           <div className="fade-up" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {stats.recentMatches.map((m, i) => (
+            {stats.recentMatches.slice(0, settings.matchCount).map((m, i) => (
               <div key={i} style={{ display: "grid", gridTemplateColumns: "3px 44px 1fr 1fr 1fr 80px", alignItems: "center", gap: 14, padding: "14px 20px", background: `linear-gradient(135deg, ${LOL_BLUE}99, var(--bg-card))`, border: `1px solid ${LOL}20`, borderRadius: "var(--radius-md)" }}>
                 <div style={{ width: 3, height: 40, borderRadius: 99, background: m.result === "win" ? "var(--accent-green)" : "var(--accent-red)" }} />
                 <div style={{ width: 44, height: 44, borderRadius: "50%", background: `${LOL}20`, border: `2px solid ${LOL}30`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: LOL, fontFamily: "var(--font-mono)" }}>

@@ -110,3 +110,17 @@ html, body {
 .text-loss { color: var(--accent-red); }
 .bg-win { background: rgba(52, 211, 153, 0.12); }
 .bg-loss { background: rgba(248, 113, 113, 0.12); }
+
+html[data-compact="true"] body {
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+html[data-compact="true"] .card {
+  border-radius: var(--radius-md);
+}
+
+html[data-compact="true"] .stat-pill {
+  padding: 1px 8px;
+  font-size: 11px;
+}

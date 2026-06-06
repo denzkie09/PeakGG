@@ -5,6 +5,7 @@ import Link from "next/link";
 import { MOCK_VALORANT_STATS } from "@/lib/mock/data";
 import MatchRow from "@/components/ui/MatchRow";
 import MapStats from "@/components/ui/MapStats";
+import { useSettings } from "@/context/SettingsContext";
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from "recharts";
 
 const VAL = "#ff4655";
@@ -19,10 +20,11 @@ const GAME_LINKS = [
 
 export default function ValorantPage() {
   const stats = MOCK_VALORANT_STATS;
+  const { settings } = useSettings();
   const [tab, setTab] = useState<"overview" | "agents" | "matches">("overview");
   const [agentSearch, setAgentSearch] = useState("");
 
-  const matches = stats.recentMatches.map(m => ({
+  const matches = stats.recentMatches.slice(0, settings.matchCount).map(m => ({
     map: m.map, agent: m.agent, agentIcon: m.agentIcon, result: m.result,
     kills: m.kills, deaths: m.deaths, assists: m.assists,
     extra: `${m.hsPercent}% HS`, time: m.playedAt,
@@ -87,11 +89,11 @@ export default function ValorantPage() {
               </h1>
             </div>
             {/* Rank badge */}
-            <div style={{ marginLeft: "auto", background: VAL_DIM, border: `1px solid ${VAL}40`, borderRadius: "var(--radius-lg)", padding: "12px 20px", textAlign: "right" }}>
+            {settings.showRankBanner && <div style={{ marginLeft: "auto", background: VAL_DIM, border: `1px solid ${VAL}40`, borderRadius: "var(--radius-lg)", padding: "12px 20px", textAlign: "right" }}>
               <div style={{ fontSize: 11, color: VAL, fontFamily: "var(--font-mono)", marginBottom: 4, textTransform: "uppercase", letterSpacing: "1px" }}>Current Rank</div>
               <div className="font-display" style={{ fontSize: 22, fontWeight: 700, color: "var(--text-primary)" }}>{stats.rank}</div>
               <div style={{ fontSize: 13, color: VAL, fontFamily: "var(--font-mono)" }}>{stats.rr} RR</div>
-            </div>
+            </div>}
           </div>
         </div>
 
@@ -141,8 +143,8 @@ export default function ValorantPage() {
 
         {/* OVERVIEW */}
         {tab === "overview" && (
-          <div className="fade-up" style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr", gap: 16 }}>
-            <div style={{ background: VAL_DIM, border: `1px solid ${VAL}25`, borderRadius: "var(--radius-lg)", padding: "18px 20px" }}>
+          <div className="fade-up" style={{ display: "grid", gridTemplateColumns: settings.showRadarChart && settings.showMapStats ? "1fr 1.2fr" : "1fr", gap: 16 }}>
+            {settings.showRadarChart && <div style={{ background: VAL_DIM, border: `1px solid ${VAL}25`, borderRadius: "var(--radius-lg)", padding: "18px 20px" }}>
               <h2 className="font-display" style={{ fontSize: 14, fontWeight: 700, color: VAL, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 16 }}>Skill Radar</h2>
               <ResponsiveContainer width="100%" height={220}>
                 <RadarChart data={radarData}>
@@ -151,11 +153,11 @@ export default function ValorantPage() {
                   <Radar dataKey="value" stroke={VAL} fill={VAL} fillOpacity={0.2} strokeWidth={1.5} />
                 </RadarChart>
               </ResponsiveContainer>
-            </div>
-            <div style={{ background: VAL_DIM, border: `1px solid ${VAL}25`, borderRadius: "var(--radius-lg)", padding: "18px 20px" }}>
+            </div>}
+            {settings.showMapStats && <div style={{ background: VAL_DIM, border: `1px solid ${VAL}25`, borderRadius: "var(--radius-lg)", padding: "18px 20px" }}>
               <h2 className="font-display" style={{ fontSize: 14, fontWeight: 700, color: VAL, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 16 }}>Map Performance ({stats.mapStats.length} maps)</h2>
               <MapStats maps={stats.mapStats} />
-            </div>
+            </div>}
           </div>
         )}
 

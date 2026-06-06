@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import MatchRow from "@/components/ui/MatchRow";
+import { useSettings, type DefaultGame } from "@/context/SettingsContext";
 import {
   MOCK_VALORANT_STATS,
   MOCK_LEAGUE_STATS,
@@ -27,9 +28,10 @@ type RecentGameGroup = {
   }>;
 };
 
-const RECENT_LIMIT = 4;
+const GAME_ORDER: DefaultGame[] = ["valorant", "league", "cs2", "dota2"];
 
 export default function DashboardPage() {
+  const { settings } = useSettings();
   const valStats = MOCK_VALORANT_STATS;
   const lolStats = MOCK_LEAGUE_STATS;
   const cs2Stats = MOCK_CS2_STATS;
@@ -41,7 +43,7 @@ export default function DashboardPage() {
       href: "/games/valorant",
       accentColor: "var(--accent-val)",
       meta: `${valStats.rank} · ${valStats.winRate}% WR`,
-      matches: valStats.recentMatches.slice(0, RECENT_LIMIT).map((m) => ({
+      matches: valStats.recentMatches.slice(0, settings.matchCount).map((m) => ({
         map: m.map,
         agent: m.agent,
         result: m.result,
@@ -57,7 +59,7 @@ export default function DashboardPage() {
       href: "/games/league",
       accentColor: "var(--accent-lol)",
       meta: `${lolStats.rank} · ${lolStats.lp} LP`,
-      matches: lolStats.recentMatches.slice(0, RECENT_LIMIT).map((m) => ({
+      matches: lolStats.recentMatches.slice(0, settings.matchCount).map((m) => ({
         map: m.lane,
         champion: m.champion,
         result: m.result,
@@ -73,7 +75,7 @@ export default function DashboardPage() {
       href: "/games/cs2",
       accentColor: "var(--accent-cs)",
       meta: `${cs2Stats.rank} · ${cs2Stats.elo} ELO`,
-      matches: cs2Stats.recentMatches.slice(0, RECENT_LIMIT).map((m) => ({
+      matches: cs2Stats.recentMatches.slice(0, settings.matchCount).map((m) => ({
         map: m.map,
         result: m.result,
         kills: m.kills,
@@ -88,7 +90,7 @@ export default function DashboardPage() {
       href: "/games/dota2",
       accentColor: "#e05c30",
       meta: `${dota2Stats.rank} · ${dota2Stats.mmr} MMR`,
-      matches: dota2Stats.recentMatches.slice(0, RECENT_LIMIT).map((m) => ({
+      matches: dota2Stats.recentMatches.slice(0, settings.matchCount).map((m) => ({
         map: m.hero,
         agent: m.role,
         result: m.result,
@@ -100,6 +102,12 @@ export default function DashboardPage() {
       })),
     },
   ];
+
+  const defaultIndex = GAME_ORDER.indexOf(settings.defaultGame);
+  const orderedGameGroups = [
+    gameGroups[defaultIndex],
+    ...gameGroups.filter((_, index) => index !== defaultIndex),
+  ].filter(Boolean);
 
   const totalRecentMatches = gameGroups.reduce((total, group) => total + group.matches.length, 0);
   const totalRecentWins = gameGroups.reduce(
@@ -134,7 +142,7 @@ export default function DashboardPage() {
           gap: 16,
         }}
       >
-        {gameGroups.map((group) => (
+        {orderedGameGroups.map((group) => (
           <section
             key={group.title}
             className="card"

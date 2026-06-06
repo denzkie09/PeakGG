@@ -14,6 +14,7 @@ import {
   Gamepad2,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useSettings } from "@/context/SettingsContext";
 
 const NAV = [
   { href: "/dashboard",      label: "Dashboard",   icon: LayoutDashboard },
@@ -41,6 +42,7 @@ function SidebarInner() {
   const pathname = usePathname();
   const router   = useRouter();
   const { user, logout } = useAuth();
+  const { settings } = useSettings();
 
   const handleLogout = () => {
     logout();
@@ -50,6 +52,7 @@ function SidebarInner() {
   const providerColor = user?.provider === "riot" ? "var(--accent-val)" : "#c2c2c2";
   const ProviderIcon  = user?.provider === "riot" ? Sword : Gamepad2;
   const providerLabel = user?.provider === "riot" ? "Riot Account" : "Steam Account";
+  const displayName = settings.displayName.trim() || user?.username || "Player";
 
   return (
     <aside
@@ -107,7 +110,7 @@ function SidebarInner() {
             </div>
             <div style={{ minWidth: 0 }}>
               <div style={{ fontSize: 12, fontWeight: 500, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {user.username}{user.tagline ? <span style={{ color: "var(--text-tertiary)" }}>#{user.tagline}</span> : ""}
+                {displayName}{user.tagline ? <span style={{ color: "var(--text-tertiary)" }}>#{user.tagline}</span> : ""}
               </div>
               <div style={{ fontSize: 10, color: providerColor }}>{providerLabel}</div>
             </div>
@@ -217,7 +220,7 @@ function SidebarInner() {
                 width: 28,
                 height: 28,
                 borderRadius: "50%",
-                background: "linear-gradient(135deg, #a78bfa, #60a5fa)",
+                background: settings.avatarColor,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -227,11 +230,11 @@ function SidebarInner() {
                 flexShrink: 0,
               }}
             >
-              {user.username.slice(0, 2).toUpperCase()}
+              {displayName.slice(0, 2).toUpperCase()}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 13, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {user.username}
+                {displayName}
               </div>
               <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>{user.rank ?? "Unranked"}</div>
             </div>
