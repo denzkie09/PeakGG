@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { MOCK_CS2_STATS } from "@/lib/mock/data";
 import { useSettings } from "@/context/SettingsContext";
+import type { CS2Stats } from "@/types";
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 
 const CS = "#e06b30";
@@ -17,9 +18,44 @@ const GAME_LINKS = [
 ];
 
 export default function CS2Page() {
-  const stats = MOCK_CS2_STATS;
+  const [stats, setStats] = useState<CS2Stats>(MOCK_CS2_STATS);
+  const [dataStatus, setDataStatus] = useState<"loading" | "live" | "mock" | "error">("loading");
+  const [dataMessage, setDataMessage] = useState("Loading Steam stats");
   const { settings } = useSettings();
   const [tab, setTab] = useState<"overview" | "maps" | "matches">("overview");
+
+  useEffect(() => {
+    let alive = true;
+
+    async function loadRealStats() {
+      try {
+        const res = await fetch("/api/stats/cs2", { cache: "no-store" });
+        const data = await res.json();
+
+        if (!alive) return;
+
+        if (!res.ok) {
+          setDataStatus("error");
+          setDataMessage(data?.error ?? "Using mock CS2 data");
+          return;
+        }
+
+        setStats(data.stats);
+        setDataStatus("live");
+        setDataMessage("Steam aggregate stats");
+      } catch {
+        if (!alive) return;
+        setDataStatus("error");
+        setDataMessage("Using mock CS2 data");
+      }
+    }
+
+    loadRealStats();
+
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const radarData = [
     { stat: "Aim",        value: 75 },
@@ -72,6 +108,11 @@ export default function CS2Page() {
               </h1>
               <div style={{ fontSize: 13, color: "var(--text-tertiary)", fontFamily: "var(--font-mono)", marginTop: 4 }}>
                 PLAYER_ID: jake_dev99 · NA PREMIER
+              </div>
+              <div style={{ marginTop: 8 }}>
+                <span className="stat-pill" style={{ color: dataStatus === "live" ? "var(--accent-green)" : dataStatus === "loading" ? CS : "var(--text-tertiary)" }}>
+                  {dataStatus === "live" ? "Live" : dataStatus === "loading" ? "Loading" : "Mock"} · {dataMessage}
+                </span>
               </div>
             </div>
             {/* ELO panel */}
@@ -153,7 +194,7 @@ export default function CS2Page() {
         )}
 
         {/* MAPS */}
-        {tab === "maps" && settings.showMapStats && (
+        {tab === "maps" && settings.showMapStats && stats.mapStats.length > 0 && (
           <div className="fade-up" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
             {stats.mapStats.map(m => (
               <div key={m.name} style={{ background: CS_STEEL, border: `1px solid ${m.winRate >= 50 ? CS : "var(--border-subtle)"}40`, borderRadius: "var(--radius-lg)", padding: "18px 20px", position: "relative", overflow: "hidden" }}>
@@ -170,9 +211,20 @@ export default function CS2Page() {
           </div>
         )}
 
+        {tab === "maps" && settings.showMapStats && stats.mapStats.length === 0 && (
+          <div className="fade-up card" style={{ padding: "24px 28px", color: "var(--text-tertiary)" }}>
+            Steam does not expose official CS2 map history through this API.
+          </div>
+        )}
+
         {/* MATCHES */}
         {tab === "matches" && (
           <div className="fade-up" style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {stats.recentMatches.length === 0 && (
+              <div className="card" style={{ padding: "24px 28px", color: "var(--text-tertiary)" }}>
+                Steam only provides aggregate CS2 stats here, not official personal match history.
+              </div>
+            )}
             {stats.recentMatches.slice(0, settings.matchCount).map((m, i) => (
               <div key={i} style={{ display: "grid", gridTemplateColumns: "3px 1.2fr 1fr 1fr 1fr 80px", alignItems: "center", gap: 14, padding: "14px 20px", background: i % 2 === 0 ? CS_STEEL : "transparent", border: `1px solid ${CS}15` }}>
                 <div style={{ width: 3, height: 36, background: m.result === "win" ? "var(--accent-green)" : "var(--accent-red)" }} />

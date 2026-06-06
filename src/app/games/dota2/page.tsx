@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { MOCK_DOTA2_STATS } from "@/lib/mock/data";
 import StatCard from "@/components/ui/StatCard";
 import { useSettings } from "@/context/SettingsContext";
+import type { Dota2Stats } from "@/types";
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { ChevronRight } from "lucide-react";
 
@@ -12,10 +13,45 @@ const DOTA_COLOR = "#e05c30";
 const DOTA_ACCENT = "#f09b3a";
 
 export default function Dota2Page() {
-  const stats = MOCK_DOTA2_STATS;
+  const [stats, setStats] = useState<Dota2Stats>(MOCK_DOTA2_STATS);
+  const [dataStatus, setDataStatus] = useState<"loading" | "live" | "mock" | "error">("loading");
+  const [dataMessage, setDataMessage] = useState("Loading OpenDota data");
   const { settings } = useSettings();
   const [tab, setTab] = useState<"overview" | "heroes" | "matches">("overview");
   const [heroSearch, setHeroSearch] = useState("");
+
+  useEffect(() => {
+    let alive = true;
+
+    async function loadRealStats() {
+      try {
+        const res = await fetch("/api/stats/dota2", { cache: "no-store" });
+        const data = await res.json();
+
+        if (!alive) return;
+
+        if (!res.ok) {
+          setDataStatus("error");
+          setDataMessage(data?.error ?? "Using mock Dota 2 data");
+          return;
+        }
+
+        setStats(data.stats);
+        setDataStatus("live");
+        setDataMessage("OpenDota data");
+      } catch {
+        if (!alive) return;
+        setDataStatus("error");
+        setDataMessage("Using mock Dota 2 data");
+      }
+    }
+
+    loadRealStats();
+
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const radarData = [
     { stat: "Fighting",    value: 72 },
@@ -45,9 +81,12 @@ export default function Dota2Page() {
           <h1 className="font-display" style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.5px" }}>
             Dota 2
           </h1>
-          <p style={{ color: "var(--text-tertiary)", fontSize: 13, marginTop: 2 }}>
-            Connected via Steam
-          </p>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 2 }}>
+            <p style={{ color: "var(--text-tertiary)", fontSize: 13 }}>Connected via Steam</p>
+            <span className="stat-pill" style={{ color: dataStatus === "live" ? "var(--accent-green)" : dataStatus === "loading" ? DOTA_ACCENT : "var(--text-tertiary)" }}>
+              {dataStatus === "live" ? "Live" : dataStatus === "loading" ? "Loading" : "Mock"} · {dataMessage}
+            </span>
+          </div>
         </div>
         {/* Game switcher */}
         <div className="fade-up" style={{ display: "flex", gap: 8, marginBottom: 28 }}>
@@ -205,10 +244,17 @@ export default function Dota2Page() {
       {tab === "matches" && (
         <div className="fade-up" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {stats.recentMatches.slice(0, settings.matchCount).map((m) => (
-            <Link key={m.matchId} href={`/games/dota2/match/${m.matchId}`} style={{ textDecoration: "none" }}>
+            <Link
+              key={m.matchId}
+              href={m.items.length ? `/games/dota2/match/${m.matchId}` : "/games/dota2"}
+              onClick={(event) => {
+                if (!m.items.length) event.preventDefault();
+              }}
+              style={{ textDecoration: "none", cursor: m.items.length ? "pointer" : "default" }}
+            >
               <div
                 className="card card-hover"
-                style={{ padding: "14px 20px", display: "grid", gridTemplateColumns: "3px 44px 1.2fr 1fr 1fr 1fr 80px 32px", alignItems: "center", gap: 14, cursor: "pointer" }}
+                style={{ padding: "14px 20px", display: "grid", gridTemplateColumns: "3px 44px 1.2fr 1fr 1fr 1fr 80px 32px", alignItems: "center", gap: 14, cursor: m.items.length ? "pointer" : "default" }}
               >
                 {/* Result bar */}
                 <div style={{ width: 3, height: 40, borderRadius: 99, background: m.result === "win" ? "var(--accent-green)" : "var(--accent-red)" }} />
@@ -253,7 +299,7 @@ export default function Dota2Page() {
                   {m.result}
                 </div>
 
-                <ChevronRight size={16} style={{ color: "var(--text-tertiary)" }} />
+                <ChevronRight size={16} style={{ color: m.items.length ? "var(--text-tertiary)" : "transparent" }} />
               </div>
             </Link>
           ))}
