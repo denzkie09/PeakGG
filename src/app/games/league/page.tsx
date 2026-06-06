@@ -43,7 +43,7 @@ export default function LeaguePage() {
       <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, transparent, ${LOL}, transparent)`, pointerEvents: "none" }} />
       <div style={{ position: "absolute", top: 80, left: "50%", transform: "translateX(-50%)", width: 500, height: 200, background: `radial-gradient(ellipse, ${LOL}0a 0%, transparent 70%)`, pointerEvents: "none" }} />
 
-      <div style={{ padding: "28px 32px", maxWidth: 1100, width: "100%", position: "relative" }}>
+      <div style={{ padding: "28px 32px", width: "100%", position: "relative" }}>
 
         {/* Game switcher */}
         <div className="fade-up" style={{ display: "flex", gap: 8, marginBottom: 28 }}>

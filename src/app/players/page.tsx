@@ -21,7 +21,7 @@ export default function PlayersPage() {
     "var(--accent-cs)";
 
   return (
-    <div style={{ padding: "28px 32px", maxWidth: 1100, width: "100%" }}>
+    <div style={{ padding: "28px 32px", width: "100%" }}>
       <div className="fade-up" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
         <div>
           <h1 className="font-display" style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.5px" }}>Players</h1>
@@ -88,11 +88,11 @@ export default function PlayersPage() {
 
         {players.length === 0 ? (
           <div style={{ padding: "40px 20px", textAlign: "center", color: "var(--text-tertiary)" }}>
-            No players found for "{search}"
+            No players found for &quot;{search}&quot;
           </div>
         ) : (
           players.map((p, i) => {
-            const stats = (p as any).valorantStats;
+            const stats = p.valorantStats;
             return (
               <div
                 key={p.id}

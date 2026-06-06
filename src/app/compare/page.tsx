@@ -63,15 +63,15 @@ export default function ComparePage() {
 
   const compareBars: CompareBar[] = game === "valorant" && (selectedPro || selectedPlayer)
     ? [
-        { label: "KDA", you: myStats.kda, them: selectedPro?.valorantStats?.kda || (selectedPlayer as any)?.valorantStats?.kda || 2.0 },
-        { label: "Win Rate", you: myStats.winRate, them: selectedPro?.valorantStats?.winRate || (selectedPlayer as any)?.valorantStats?.winRate || 50, suffix: "%" },
-        { label: "HS%", you: myStats.headshotPercent, them: selectedPro?.valorantStats?.headshotPercent || (selectedPlayer as any)?.valorantStats?.headshotPercent || 30, suffix: "%" },
-        { label: "Avg ACS", you: myStats.avgCombatScore, them: selectedPro?.valorantStats?.avgCombatScore || (selectedPlayer as any)?.valorantStats?.avgCombatScore || 200 },
+        { label: "KDA", you: myStats.kda, them: selectedPro?.valorantStats?.kda || selectedPlayer?.valorantStats?.kda || 2.0 },
+        { label: "Win Rate", you: myStats.winRate, them: selectedPro?.valorantStats?.winRate || selectedPlayer?.valorantStats?.winRate || 50, suffix: "%" },
+        { label: "HS%", you: myStats.headshotPercent, them: selectedPro?.valorantStats?.headshotPercent || selectedPlayer?.valorantStats?.headshotPercent || 30, suffix: "%" },
+        { label: "Avg ACS", you: myStats.avgCombatScore, them: selectedPro?.valorantStats?.avgCombatScore || selectedPlayer?.valorantStats?.avgCombatScore || 200 },
       ]
     : [];
 
   return (
-    <div style={{ padding: "28px 32px", maxWidth: 1100, width: "100%" }}>
+    <div style={{ padding: "28px 32px", width: "100%" }}>
       <div className="fade-up" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
         <div>
           <h1 className="font-display" style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.5px" }}>Compare</h1>
@@ -228,7 +228,7 @@ export default function ComparePage() {
                     </div>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{p.username}</div>
-                      <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>{p.region} · {(p as any).valorantStats?.rank}</div>
+                      <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>{p.region} · {p.valorantStats?.rank}</div>
                     </div>
                     <ChevronRight size={14} style={{ color: "var(--text-tertiary)" }} />
                   </button>
@@ -277,7 +277,7 @@ export default function ComparePage() {
                   </div>
                   <div style={{ fontWeight: 600, fontSize: 14 }}>{selectedPro?.name || selectedPlayer?.username}</div>
                   <div className="stat-pill" style={{ color: "var(--accent-cs)" }}>
-                    {selectedPro ? `${selectedPro.team}` : (selectedPlayer as any)?.valorantStats?.rank}
+                    {selectedPro ? `${selectedPro.team}` : selectedPlayer?.valorantStats?.rank}
                   </div>
                 </div>
               </div>

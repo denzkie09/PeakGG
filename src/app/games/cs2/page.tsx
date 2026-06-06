@@ -44,7 +44,7 @@ export default function CS2Page() {
       {/* Grid lines */}
       <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, pointerEvents: "none", opacity: 0.025, backgroundImage: `linear-gradient(${CS} 1px, transparent 1px), linear-gradient(90deg, ${CS} 1px, transparent 1px)`, backgroundSize: "40px 40px" }} />
 
-      <div style={{ padding: "28px 32px", maxWidth: 1100, width: "100%", position: "relative" }}>
+      <div style={{ padding: "28px 32px", width: "100%", position: "relative" }}>
 
         {/* Game switcher */}
         <div className="fade-up" style={{ display: "flex", gap: 8, marginBottom: 28 }}>

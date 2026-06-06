@@ -34,7 +34,7 @@ export default function MatchDetailPage({ params }: { params: Promise<{ matchId:
   const minutes = Array.from({ length: maxMinute + 1 }, (_, i) => i);
 
   return (
-    <div style={{ padding: "28px 32px", maxWidth: 1100, width: "100%" }}>
+    <div style={{ padding: "28px 32px", width: "100%" }}>
 
       {/* Back + header */}
       <div className="fade-up" style={{ marginBottom: 24 }}>

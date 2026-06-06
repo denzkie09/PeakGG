@@ -57,7 +57,7 @@ export default function ValorantPage() {
         ))}
       </div>
 
-      <div style={{ padding: "28px 32px", maxWidth: 1100, width: "100%", position: "relative" }}>
+      <div style={{ padding: "28px 32px", width: "100%", position: "relative" }}>
 
         {/* Game switcher */}
         <div className="fade-up" style={{ display: "flex", gap: 8, marginBottom: 28 }}>

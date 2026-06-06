@@ -37,7 +37,7 @@ export default function Dota2Page() {
   );
 
   return (
-    <div style={{ padding: "28px 32px", maxWidth: 1100, width: "100%" }}>
+    <div style={{ padding: "28px 32px", width: "100%" }}>
 
       {/* Header */}
       <div className="fade-up" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>

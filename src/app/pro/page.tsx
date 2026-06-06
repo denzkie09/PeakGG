@@ -47,7 +47,7 @@ export default function ProPlayersPage() {
   };
 
   return (
-    <div style={{ padding: "28px 32px", maxWidth: 1100, width: "100%" }}>
+    <div style={{ padding: "28px 32px", width: "100%" }}>
       <div className="fade-up" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
         <div>
           <h1 className="font-display" style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.5px" }}>Pro Players</h1>

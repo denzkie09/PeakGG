@@ -110,7 +110,7 @@ export default function SettingsPage() {
   const AVATAR_COLORS = ["#a78bfa", "#60a5fa", "#34d399", "#f472b6", "#ff4655", "#c89b3c", "#e06b30"];
 
   return (
-    <div style={{ padding: "28px 32px", maxWidth: 720, width: "100%" }}>
+    <div style={{ padding: "28px 32px", width: "100%" }}>
 
       {/* Header */}
       <div className="fade-up" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 32 }}>
